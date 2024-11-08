@@ -2,10 +2,38 @@ import { Book } from "../models/Book.js";
 import { showAlert } from "../utils/alert.js";
 
 export class LibraryController {
-  constructor(bookForm, bookList) {
+  constructor(bookForm, bookList, searchInput) {
     this.books = JSON.parse(localStorage.getItem("books")) || [];
     this.bookForm = bookForm;
     this.bookList = bookList;
+    this.searchInput = searchInput;
+
+    // Tambahkan event listener untuk pencarian
+    if (this.searchInput) {
+      this.searchInput.addEventListener("input", (e) => {
+        this.searchBooks(e.target.value);
+      });
+    }
+  }
+
+  // Method pencarian buku
+  searchBooks(query) {
+    // Konversi query ke lowercase untuk pencarian case-insensitive
+    const lowercaseQuery = query.toLowerCase().trim();
+
+    // Filter buku berdasarkan judul atau penulis
+    const filteredBooks = this.books.filter(
+      (book) =>
+        book.title.toLowerCase().includes(lowercaseQuery) ||
+        book.author.toLowerCase().includes(lowercaseQuery)
+    );
+
+    // Render daftar buku yang sesuai
+    this.bookList.render(
+      filteredBooks,
+      this.deleteBook.bind(this),
+      this.editBook.bind(this)
+    );
   }
 
   addBook(bookData) {
@@ -28,7 +56,7 @@ export class LibraryController {
         const index = this.books.findIndex((b) => b.id === id);
         this.books[index] = { ...updatedBook, id };
         this.saveAndRender();
-        showAlert("success", "Buku berhasi diperbarui");
+        showAlert("success", "Buku berhasil diperbarui");
       });
       this.bookForm.fillForm(book);
     }
@@ -36,9 +64,7 @@ export class LibraryController {
 
   deleteBook(id) {
     id = parseInt(id);
-
     this.books = this.books.filter((b) => b.id !== id);
-
     this.saveAndRender();
     showAlert("warning", "Buku berhasil dihapus!");
   }
